@@ -2,12 +2,39 @@ package com.stream.api.practice;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Driver {
+
+    public static boolean addressStartsWithAfterSkippingDigits(String address, char... prefixes) {
+        if (address == null || prefixes == null) {
+            return false;
+        }
+
+        // Find the first non-digit character
+        int offset = 0;
+        while (offset < address.length() && Character.isDigit(address.charAt(offset))) {
+            offset++;
+        }
+
+        // Check if the remaining string starts with any of the given prefixes
+        if (offset >= address.length()) {
+            return false;
+        }
+
+        char firstChar = address.charAt(offset);
+        for (char prefix : prefixes) {
+            if (firstChar == prefix) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static void main(String[] args) {
 
@@ -104,7 +131,107 @@ public class Driver {
        */
          List<String> listOfActiveUsersEmail = users.stream().filter(user -> user.isActive() == true).map(user -> user.getEmail()).collect(Collectors.toList());
         System.out.println(listOfActiveUsersEmail);
+
+
+    /*
+    Q11- Find the total amount spent by each user and sort the users by the total amount spent in descending order.
+     */
+
+         Map<Long, Double> amountSpentByUser = orders.stream().collect(Collectors.groupingBy(Order::getUserId, Collectors.summingDouble(x -> x.getPrice() * x.getQuantity())));
+         List<Map.Entry<Long, Double>> UsersSortedDescendingByAmountSpent = amountSpentByUser.entrySet().stream().sorted(Map.Entry.<Long, Double>comparingByValue().reversed()).collect(Collectors.toList());
+        System.out.println(UsersSortedDescendingByAmountSpent);
+
+        /*
+        Q12 - Average Age of Users with at least One Order
+         */
+         OptionalDouble averageAgeOfUserWhoHasOrdersAtLeastOneOrder = users.stream().filter(user -> orders.stream().anyMatch(order -> order.getUserId().equals(user.getId())))
+                .mapToInt(user -> Period.between(user.getDateOfBirth(), LocalDate.now()).getYears()).average();
+        System.out.println(averageAgeOfUserWhoHasOrdersAtLeastOneOrder.getAsDouble());
+
+        /*
+        Q13 - Get a list of user names (first and last) who have placed orders that are either
+        'SHIPPED' or 'DELIVERED' and also have an active status.
+         */
+
+         List<String> usernames = users.stream().filter(User::isActive).filter(user -> orders.stream()
+                        .anyMatch(order -> order.getUserId().equals(user.getId()) &&
+                                (order.getStatus().equals("DELIVERED") || order.getStatus().equals("SHIPPED"))))
+                .map(user -> user.getFirstName() + user.getLastName()).collect(Collectors.toList());
+
+        System.out.println(usernames);
+
+        /*
+        Q14- Find the user with the highest total amount spent on orders and return their details
+         */
+
+         Map<Long, Double> collect = orders.stream().collect(Collectors.groupingBy(x -> x.getUserId(),
+                Collectors.summingDouble(x -> x.getPrice() * x.getQuantity())));
+         Optional<Long> maxAmountSpent = collect.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey);
+        System.out.println(maxAmountSpent.get());
+
+        /*
+        Q15 -Find all orders for users with the role 'USER', sorted by order amount in descending order.
+         */
+
+         List<Order> orderList = orders.stream().filter(order -> users.stream().anyMatch(user -> user.getId().
+                equals(order.getUserId()) && user.getRole().equals("USER"))).collect(Collectors.toList());
+        System.out.println(orderList);
+
+        /*
+        Q16 - Find the most recent order placed by any user and return the user's name and order details.
+         */
+         Optional<Order> maxOrder = orders.stream().max(Comparator.comparing(Order::getOrderDate));
+         if(maxOrder.isPresent()){
+              Order order = maxOrder.get();
+              User user1 = users.stream().filter(user -> user.getId().equals(order.getUserId())).findFirst().get();
+             System.out.println("username is " + user1.getFirstName() + "Order details "+ order);
+
+         }
+
+         /*
+         Q17 -  Map of Role to Users with Orders
+          */
+        Map<String, List<User>> usersByRoleWithOrders = users.stream()
+                .filter(user -> orders.stream().anyMatch(order -> order.getUserId().equals(user.getId())))
+                .collect(Collectors.groupingBy(User::getRole));
+        System.out.println(usersByRoleWithOrders);
+
+
+        /*
+        Q18 - Get a list of products ordered by users who live on streets that start with the letter 'M' or 'P'
+         */
+     
+                /*
+                Not working
+                 */
+//                .filter(order -> users.stream()
+//                        .filter(user -> addressStartsWithAfterSkippingDigits(user.getAddress(), 'M'))
+//                        .anyMatch(user -> user.getId().equals(order.getUserId())))
+//                .map(Order::getProduct)
+//                .collect(Collectors.toList());
+//
+//        System.out.println(productsFromSpecificStreets);
+//
+
+
+   /*
+   Q19 - Find the total number of orders placed in each month of 2023.
+    */
+         Map<Month, Long> montWiseOrders = orders.stream().filter(order -> order.getOrderDate().getYear()==2023)
+                 .collect(Collectors.groupingBy(order -> order.getOrderDate().getMonth(), Collectors.counting()));
+        System.out.println(montWiseOrders);
+
+
+        /*
+        Q 20 - Users with No Orders Sorted by Last Name
+         */
+
+         List<User> collect1 = users.stream().filter(user -> orders.stream().noneMatch(order -> order.getUserId().equals(user.getId())))
+                .sorted(Comparator.comparing(user -> user.getLastName())).collect(Collectors.toList());
+        System.out.println(collect1);
+
     }
+
 
 
 
