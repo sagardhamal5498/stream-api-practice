@@ -1,5 +1,7 @@
 package com.stream.api.practice;
 
+import org.hibernate.internal.util.collections.ArrayHelper;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -8,6 +10,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.hibernate.internal.util.collections.ArrayHelper.forEach;
 
 public class Driver {
 
@@ -215,7 +219,7 @@ public class Driver {
 
 
    /*
-   Q19 - Find the total number of orders placed in each month of 2023.
+   Q 19 - Find the total number of orders placed in each month of 2023.
     */
          Map<Month, Long> montWiseOrders = orders.stream().filter(order -> order.getOrderDate().getYear()==2023)
                  .collect(Collectors.groupingBy(order -> order.getOrderDate().getMonth(), Collectors.counting()));
@@ -229,6 +233,83 @@ public class Driver {
          List<User> collect1 = users.stream().filter(user -> orders.stream().noneMatch(order -> order.getUserId().equals(user.getId())))
                 .sorted(Comparator.comparing(user -> user.getLastName())).collect(Collectors.toList());
         System.out.println(collect1);
+
+        /*
+
+        Q 21 - How would you find all users who have at least one order with the status "PENDING"?
+         */
+         List<User> userPending = users.stream().filter(user -> orders.stream().anyMatch(order -> order.getUserId()
+                .equals(user.getId()) && order.getStatus().equals("PENDING"))).collect(Collectors.toList());
+        System.out.println(userPending);
+
+        /*
+        Q 22 - How would you calculate the total amount spent by each user and return a map where the key is the user ID
+        and the value is the total amount spent?
+         */
+         Map<Long, Double> userWithPrice = orders.stream().collect(Collectors.groupingBy(order -> order.getUserId()
+                , Collectors.summingDouble(order -> order.getPrice())));
+        System.out.println(userWithPrice);
+
+        /*
+        Q 23 - How would you find the most expensive order for each user and return a map where the
+        key is the user ID and the value is the order?
+         */
+
+         Map<Long, Optional<Order>> collect2 = orders.stream().collect(Collectors.groupingBy(order -> order.getUserId(), Collectors
+                .maxBy(Comparator.comparingDouble(order -> order.getPrice()*order.getQuantity()))));
+        System.out.println(collect2);
+
+
+        /*
+        Q 24 -How would you group the orders by their status and
+        sum the quantities of the orders within each status?
+         */
+         Map<String, Integer> collect3 = orders.stream().collect(Collectors.groupingBy(order -> order.getStatus(),
+                Collectors.summingInt(order -> order.getQuantity())));
+        System.out.println(collect3);
+
+
+        /*
+        Q 25 - How would you find all users who do not have any orders?
+         */
+         List<User> collect4 = users.stream().filter(user -> orders.stream().
+                noneMatch(order -> order.getUserId().equals(user.getId()))).collect(Collectors.toList());
+        System.out.println(collect4);
+
+
+        /*
+        Q 26 - Sorting Users by the Number of Orders
+         */
+         List<User> collect5 = users.stream().sorted((u1, u2) -> Long.compare(
+                orders.stream().filter(order -> order.getUserId().equals(u2.getId())).count(),
+                orders.stream().filter(order -> order.getUserId().equals(u1.getId())).count()
+        )).collect(Collectors.toList());
+        System.out.println(collect5);
+
+        /*
+        Q 27 - Finding Orders of Active Users
+         */
+
+         List<Order> collect6 = orders.stream().filter(order -> users.stream().anyMatch(user -> user.isActive() && user.getId()
+                .equals(order.getUserId()))).collect(Collectors.toList());
+        System.out.println(collect6);
+
+        /*
+        Q 28 -How would you generate a report that lists each user along with the
+         total value of their orders and the count of their orders?
+         */
+
+        List<UserOrderReport> userOrderReports = users.stream()
+                .map(user -> new UserOrderReport(
+                        user,
+                        orders.stream().filter(order -> order.getUserId().equals(user.getId()))
+                                .mapToDouble(order -> order.getQuantity() * order.getPrice()).sum(),
+                        orders.stream().filter(order -> order.getUserId().equals(user.getId())).count()
+                ))
+                .collect(Collectors.toList());
+
+        System.out.println(userOrderReports);
+
 
     }
 
